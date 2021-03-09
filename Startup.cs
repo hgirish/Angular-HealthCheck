@@ -10,6 +10,8 @@ namespace HealthCheck
 {
     public class Startup
     {
+        public static readonly string ClientApp = "NgApp";
+
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
@@ -24,8 +26,13 @@ namespace HealthCheck
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
             {
-                configuration.RootPath = "ClientApp/dist";
+                configuration.RootPath = $"{ClientApp}/dist";
             });
+
+            services.AddHealthChecks()
+               .AddCheck("ICMP_01", new ICMPHealthCheck("www.ryadel.com", 100))
+               .AddCheck("ICMP_02", new ICMPHealthCheck("www.google.com", 100))
+               .AddCheck("ICMP_03", new ICMPHealthCheck("www.does-not-exist.com", 100));
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -53,6 +60,7 @@ namespace HealthCheck
 
             app.UseEndpoints(endpoints =>
             {
+                endpoints.MapHealthChecks("/hc");
                 endpoints.MapControllerRoute(
                     name: "default",
                     pattern: "{controller}/{action=Index}/{id?}");
@@ -63,7 +71,7 @@ namespace HealthCheck
                 // To learn more about options for serving an Angular SPA from ASP.NET Core,
                 // see https://go.microsoft.com/fwlink/?linkid=864501
 
-                spa.Options.SourcePath = "ClientApp";
+                spa.Options.SourcePath = ClientApp;
 
                 if (env.IsDevelopment())
                 {
